@@ -1,0 +1,186 @@
+openapi: 3.0.3
+info:
+  title: Order Service API
+  version: 1.0.0
+paths:
+  /orders:
+    post:
+      summary: creates an order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        201:
+          description: Order created.
+        400:
+          description: Malformed syntax of the request params.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+  /orders/{id}:
+    get:
+      summary: Returns the order information
+      operationId: getOrder
+      parameters:
+        - in: path
+          name: id
+          allowEmptyValue: false
+          description: Order guid.
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
+            example: 'e06bf865-312c-4e2a-85c3-cc20db4a4c1d'
+      responses:
+        200:
+          description: Order details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        400:
+          description: Malformed syntax of the request params.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        404:
+          description: The requested resource doesn't exists or was removed.
+components:
+  schemas:
+    OrderRequest:
+      description: Order placed from a consumer.
+      type: object
+      properties:
+        notes:
+          description: Notes from consumer.
+          type: string
+          maxLength: 1000
+          example: add mayonnaise
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+        consumer:
+          $ref: '#/components/schemas/ConsumerRequest'
+    OrderItemRequest:
+      description: Item in the order.
+      type: object
+      properties:
+        name:
+          description: Item name.
+          type: string
+          minLength: 3
+          maxLength: 32
+          example: Royale with Cheese
+        quantity:
+          description: Item quantity.
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 2
+    ConsumerRequest:
+      description: Consumer information.
+      type: object
+      properties:
+        name:
+          description: Consumer name.
+          type: string
+          minLength: 5
+          maxLength: 64
+          example: Vincent Vega
+        address:
+          description: Consumer address.
+          type: string
+          minLength: 5
+          maxLength: 64
+          example: 1234 Big Kahuna St, Los Angeles CA
+        phone:
+          description: Consumer phone number.
+          type: string
+          minLength: 10
+          maxLength: 12
+          pattern: ^[+]?[0-9]*$
+          example: +1223334444
+    OrderResponse:
+      description: Order placed from a consumer.
+      type: object
+      properties:
+        id:
+          description: Order guid.
+          type: string
+          example: 'e06bf865-312c-4e2a-85c3-cc20db4a4c1d'
+        state:
+          description: Order state.
+          type: string
+          enum: [ 'APPROVAL_PENDING','APPROVED','REJECTED','CANCEL_PENDING','CANCELLED','REVISION_PENDING' ]
+          example: 'APPROVAL_PENDING'
+        notes:
+          description: Notes from consumer.
+          type: string
+          example: add mayonnaise
+        orderItems:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemResponse'
+        consumer:
+          $ref: '#/components/schemas/ConsumerResponse'
+    OrderItemResponse:
+      description: Item in the Order.
+      type: object
+      properties:
+        name:
+          description: Item name.
+          type: string
+          example: Royale with Cheese
+        quantity:
+          description: Item quantity.
+          type: integer
+          example: 2
+    ConsumerResponse:
+      description: Consumer information.
+      type: object
+      properties:
+        name:
+          description: Consumer name.
+          type: string
+          example: Vincent Vega
+        address:
+          description: Consumer address.
+          type: string
+          example: 123 Big Kahuna St, Los Angeles CA
+        phone:
+          description: Consumer phone number.
+          type: string
+          example: +1223334444
+    ErrorDetails:
+      type: object
+      properties:
+        code:
+          description: Application error code.
+          type: integer
+          nullable: false
+          example: 400
+        detail:
+          description: A short, summary of the problem type.
+          type: string
+          nullable: false
+          example: 'size must be between 10 and 12.'
+        field:
+          description: The field that caused the error.
+          type: string
+          example: 'consumer.phone'
+        value:
+          description: The value of the field that caused the error.
+          type: object
+          example: null
+        location:
+          description: The location of the field that caused the error.
+          type: string
+          enum: [ 'BODY','PATH','QUERY','HEADER' ]
+          example: 'BODY'
